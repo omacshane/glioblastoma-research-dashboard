@@ -129,7 +129,6 @@ dmypy.json
 .pyre/
 
 notebooks/*
-*.db
 .idea/*
 src/config.ini
 *.DS_Store
