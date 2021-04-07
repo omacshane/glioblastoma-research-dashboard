@@ -16,7 +16,7 @@ class GetPubmedData():
     def __init__(self, create_db=True):
 
         self.config = configparser.ConfigParser()
-        self.config.read('src/config.ini')
+        self.config.read('src/tmp_config.ini')
         print(self.config.sections())
         api_key = self.config['API_KEY']['api_key']
         self.api_string = ""
