@@ -7,6 +7,10 @@
 
 The Streamlit app retrives recent GBM-related abstracts using the [PubMed Entrez API](https://www.ncbi.nlm.nih.gov/home/develop/api/) app displays summaries and relations between papers.
 
+<img src="/figures/clustermap.png" width="100" height="100">
+
+![Heatmap](/figures/clustermap.png =100x100)
+
 ## API keys
 
 The default settings access the API without an API key and return only 30 records per query.
