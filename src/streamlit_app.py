@@ -21,7 +21,7 @@ st.title('Analysis of Glioblastoma papers from PubMed')
 
 get_data = dr.GetPubmedData()
 st.text('Fetching latest day of data, please wait a moment...')
-#get_data.get_recent_data()
+get_data.get_recent_data()
 st.text('Done!')
 st.text('Creating summary table')
 cnx = get_data.db_con

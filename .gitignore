@@ -134,3 +134,5 @@ src/config.ini
 *.DS_Store
 .DS_Store
 
+Dockerfile
+
