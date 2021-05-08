@@ -10,6 +10,9 @@ import json
 
 from src.process_data import DataProcessor as preprocess
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 sys.path.append('../src/')
 sys.path.append('src/')
 sys.path.append('..')
@@ -34,10 +37,12 @@ class GetPubmedData():
         print(self.api_string)
 
         if connect_to_db:
+            logging.info("connecting to DB")
             self.local_database_name = "src/database/"+self.config['DATABASE']['db_name']
             self.db_con = sqlite3.connect(self.local_database_name)
         
         if create_db:
+            logging.info("Creating DB")
             self.db_con.execute("""CREATE TABLE IF NOT EXISTS abstracts 
                                                     (id INTEGER PRIMARY KEY,
                                                     date text,
@@ -121,20 +126,25 @@ class GetPubmedData():
         abstract = self.get_abstract(str(id))
         entities, genes = self.get_entities_from_abstract(abstract)
 
+        try:
+            db.execute("""INSERT OR IGNORE INTO abstracts 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                       (id,
+                        pub_date,
+                        retrieval_date,
+                        source,
+                        last_author,
+                        title,
+                        language,
+                        doi,
+                        full_journal_name,
+                        abstract,
+                        entities,
+                        genes))
+            db.commit()
+        except Exception as e:
+            logging.error('Encountered error: ' + str(e))
 
-        db.execute('INSERT OR IGNORE INTO abstracts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (id,
-                                                                                pub_date,
-                                                                                retrieval_date,
-                                                                                source,
-                                                                                last_author,
-                                                                                title,
-                                                                                language,
-                                                                                doi,
-                                                                                full_journal_name,
-                                                                                abstract,
-                                                                                entities,
-                                                                                genes))
-        db.commit()
 
     def query_definition(self, pub_med_database, year):
 
@@ -154,12 +164,11 @@ class GetPubmedData():
 
         page = requests.get(query)
 
-
         soup = Soup(page.content, 'html.parser')
         idlist = [x.get_text() for x in soup.idlist.find_all('id')]
         n_ids = len(idlist)
         print(f"{n_ids} IDs retrieved")
-
+        logging.info("Writing items to DB")
         i = 0
         for id in tqdm(idlist):
             self.write_data_to_db(id)
@@ -179,6 +188,7 @@ class GetPubmedData():
             start_year = present_year
 
         year_list = list(range(start_year, present_year))
+        logging.info(f"Fetching data from {start_year} to {present_year}")
 
         if len(year_list) == 0:
             year_list = [start_year]
@@ -193,7 +203,7 @@ class GetPubmedData():
     def get_recent_data(self,
                         database="pubmed",
                         n_days=1):
-
+        logging.info(f"Fetching data from past {n_days}")
         query = self.recent_query(database,
                                   n_days)
 
@@ -205,6 +215,6 @@ if __name__ == '__main__':
 
     gpd = GetPubmedData()
     print("WARNING: this could take a while")
-    gpd.get_data_from_years(2021)
-    #gpd.get_recent_data()
+    #gpd.get_data_from_years(2021)
+    gpd.get_recent_data()
     print("Finished querying historical data")
