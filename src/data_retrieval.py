@@ -1,10 +1,14 @@
 import requests
 from bs4 import BeautifulSoup as Soup
+from tqdm import tqdm
 import re
 import datetime
 import sqlite3
 import configparser
 import sys
+import json
+
+from src.process_data import DataProcessor as preprocess
 
 sys.path.append('../src/')
 sys.path.append('src/')
@@ -17,6 +21,7 @@ class GetPubmedData():
 
         self.config = configparser.ConfigParser()
         self.config.read('src/tmp_config.ini')
+        self.preprocessor = preprocess()
         print(self.config.sections())
         api_key = self.config['API_KEY']['api_key']
         self.api_string = ""
@@ -39,7 +44,8 @@ class GetPubmedData():
                                                     language text,
                                                     doi text,
                                                     full_journal_name text,
-                                                    abstract text)""")
+                                                    abstract text,
+                                                    entities text)""")
             
     def _try_get_field(self, field):
         
@@ -70,6 +76,14 @@ class GetPubmedData():
 
         return clean_abstract
 
+    def get_entities_from_abstract(self, text):
+
+        abstract = self.preprocessor.striphtml(data=text)
+        sub_cleaned_entities = self.preprocessor.get_entities(abstract)
+        json_output = json.dumps(sub_cleaned_entities)
+
+        return json_output
+
     def get_meta_data(self, id):
 
         response = requests.get(f'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id={id}{self.api_string}')
@@ -92,11 +106,14 @@ class GetPubmedData():
         if db is None:
             db = self.db_con
     
-        pub_date, retrieval_date, source, last_author, title, language, doi, full_journal_name = self.get_meta_data(id)
+        (pub_date, retrieval_date, source,
+         last_author, title, language,
+         doi, full_journal_name) = self.get_meta_data(id)
         abstract = self.get_abstract(str(id))
+        entities = self.get_entities_from_abstract(abstract)
 
 
-        db.execute('INSERT OR IGNORE INTO abstracts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (id,
+        db.execute('INSERT OR IGNORE INTO abstracts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (id,
                                                                                 pub_date,
                                                                                 retrieval_date,
                                                                                 source,
@@ -105,7 +122,8 @@ class GetPubmedData():
                                                                                 language,
                                                                                 doi,
                                                                                 full_journal_name,
-                                                                                abstract))
+                                                                                abstract,
+                                                                                entities))
         db.commit()
 
     def query_definition(self, pub_med_database, year):
@@ -133,7 +151,7 @@ class GetPubmedData():
         print(f"{n_ids} IDs retrieved")
 
         i = 0
-        for id in idlist:
+        for id in tqdm(idlist):
             self.write_data_to_db(id)
             if (i % 100) == 0:
                 print(f"{i}/{n_ids} abstracts processed")
@@ -155,7 +173,7 @@ class GetPubmedData():
         if len(year_list) == 0:
             year_list = [start_year]
 
-        for year in year_list:
+        for year in tqdm(year_list):
             year_query = self.query_definition(database, year)
             print(f"Processing year {year}")
             self.query_to_db(year_query)
@@ -177,5 +195,5 @@ if __name__ == '__main__':
 
     gpd = GetPubmedData()
     print("WARNING: this could take a while")
-    gpd.get_data_from_years(2010)
+    gpd.get_data_from_years(2021)
     print("Finished querying historical data")
