@@ -15,9 +15,9 @@ logging.basicConfig(level=logging.DEBUG)
 class DataProcessor():
 
     def __init__(self):
-        self.nlp = spacy.load("en_core_sci_lg")
-        self.genes = pd.read_csv("data/genes.csv", sep='\t')
-        self.list_of_genes = self.genes["Approved symbol"].\
+        self.nlp= None
+        genes = pd.read_csv("data/genes.csv", sep='\t')
+        self.list_of_genes = genes["Approved symbol"].\
             apply(lambda x: str(x).lower())
 
     def striphtml(self, data):
@@ -27,7 +27,8 @@ class DataProcessor():
     def get_entities(self, abstract):
 
         ent_list = []
-
+        if self.nlp is None:
+            self.nlp = spacy.load("en_core_sci_lg")
         doc = self.nlp(abstract)
 
         for ent in doc.ents:
@@ -35,7 +36,8 @@ class DataProcessor():
 
         return ent_list
 
-    def get_genes_from_entities(self, entity_list):
+    def get_genes_from_entities(self,
+                                entity_list):
         # print(entity_list)
         entity_series = pd.Series(entity_list).apply(lambda x: x.lower())
         # print(entity_series)
