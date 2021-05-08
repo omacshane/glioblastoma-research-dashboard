@@ -8,6 +8,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import CountVectorizer
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
 class DataProcessor():
 
     def __init__(self):
@@ -54,24 +58,29 @@ class DataProcessor():
                             max_entities=50):
 
 
-        term_list = np.unique(
-            [element.lower() for list_ in
-             cleaned_genes for element in list_])
-
+        # term_list = np.unique(
+        #     [element.lower() for list_ in
+        #      cleaned_genes for element in list_])
+        logging.info("Initialise Count Vectoriser")
         cv = CountVectorizer(ngram_range=(1, 1),
                              max_features=max_entities)
         # matrix of token counts
+        logging.info("Fit CV")
         X = cv.fit_transform(cleaned_genes)
+        logging.info("Do MatMul")
         Xc = (X.T * X)  # matrix manipulation
+        logging.info("Set diag")
         Xc.setdiag(
             0)  # set the diagonals to be zeroes as it's pointless to be 1
 
+        logging.info("Create labels")
         labels = dict(
             cv.vocabulary_.items(), key=lambda item: item[1]).keys()
-
+        logging.info("Convert x mat to dense")
         X_dense = Xc.todense()
-        print(f"x mat shape: {X_dense.shape}")
+        logging.info(f"x mat shape: {X_dense.shape}")
         sns.set(font_scale=font_scale)
+        logging.info("Create cluster map")
         fig = sns.clustermap(X_dense,
                              xticklabels=labels,
                              yticklabels=labels)
