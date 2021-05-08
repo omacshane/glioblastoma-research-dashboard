@@ -12,7 +12,6 @@ sys.path.append('../src/')
 sys.path.append('..')
 sys.path.append('.')
 
-from src.process_data import DataProcessor as preprocess
 import src.data_retrieval as dr
 
 # st.beta_set_page_config(
@@ -41,7 +40,7 @@ sub_df = pd.read_sql_query(f"""SELECT * FROM abstracts
                               LIMIT {n_articles}""", cnx)
 
 
-@st.cache(allow_output_mutation=True, max_entries=10, ttl=1600)
+#@st.cache(allow_output_mutation=True, max_entries=10, ttl=1600)
 def get_abstract_table(sub_df, n_articles):
     logging.info("Get top entities")
     sub_df['top_entities'] = [pd.Series(json.loads(x)).value_counts()[:10].
@@ -87,6 +86,8 @@ sub_year1 = df.genes[year_index]
 st.write(f"Computed on {len(sub_year1)} abstracts")
 logging.info("Get gene value counts")
 value_counts = get_data.preprocessor.get_gene_value_counts(sub_year1)
+# logging(f"df: {sub_year1}")
+# logging(f"Value counts: {value_counts}")
 
 TOP = 20
 st.subheader(f'Plot top {TOP} Gene counts accross all abstracts')
@@ -120,7 +121,7 @@ max_sample_size = st.number_input(label="Number of abstracts to sample",
 #
 # sub_year2 = df.genes[year_index2]
 
-@st.cache(allow_output_mutation=True, max_entries=10, ttl=1600)
+#@st.cache(allow_output_mutation=True, max_entries=10, ttl=1600)
 def plot_heatmap(year_df, max_features, sample_size=500):
 
     logging.info("Sample dataframe")

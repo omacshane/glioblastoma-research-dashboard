@@ -41,7 +41,7 @@ class DataProcessor():
         # print(entity_series)
         gene_entities = entity_series[entity_series.isin(self.list_of_genes)]
 
-        out_string = " ".join(gene_entities.unique().tolist())
+        out_string = ", ".join(gene_entities.unique().tolist())
 
         return out_string
 
@@ -90,11 +90,15 @@ class DataProcessor():
     def get_gene_value_counts(self, cleaned_entities):
 
         # get list of all entities to calculate terms
-        all_terms = [element.lower() for list_ in cleaned_entities for element in
-                     list_]
-
-        all_terms_series = pd.Series(all_terms)
+        #logging.info(f"Cleaned entties: {cleaned_entities}")
+        all_terms = [element.lower().strip('"').split(", ") for element in cleaned_entities]
+        #logging.info(f"All terms: {all_terms}")
+        all_terms_list = sum(all_terms,[])
+        #logging.info(f"All terms list: {all_terms_list}")
+        all_terms_series = pd.Series(all_terms_list)
+        #logging.info(f"All terms series: {all_terms_series}")
         # count occurrence of each term
         val_counts = all_terms_series.value_counts()
+        #logging.info(f"Val counts: {val_counts}")
 
         return val_counts
