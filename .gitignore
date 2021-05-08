@@ -133,6 +133,8 @@ notebooks/*
 src/config.ini
 *.DS_Store
 .DS_Store
+src/database/gbm_abstracts_.db
+
 
 Dockerfile
 

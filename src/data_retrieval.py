@@ -17,7 +17,9 @@ sys.path.append('.')
 
 class GetPubmedData():
     
-    def __init__(self, create_db=True):
+    def __init__(self,
+                 create_db=True,
+                 connect_to_db=True):
 
         self.config = configparser.ConfigParser()
         self.config.read('src/tmp_config.ini')
@@ -30,10 +32,12 @@ class GetPubmedData():
                 just twenty records per request"""
             self.api_string = f"&api_key={self.config['API_KEY']['api_key']}"
         print(self.api_string)
-        
-        if create_db:
+
+        if connect_to_db:
             self.local_database_name = "src/database/"+self.config['DATABASE']['db_name']
             self.db_con = sqlite3.connect(self.local_database_name)
+        
+        if create_db:
             self.db_con.execute("""CREATE TABLE IF NOT EXISTS abstracts 
                                                     (id INTEGER PRIMARY KEY,
                                                     date text,

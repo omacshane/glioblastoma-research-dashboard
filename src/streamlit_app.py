@@ -5,13 +5,13 @@ import json
 from matplotlib import pyplot as plt
 
 import sys
+
 sys.path.append('../src/')
 sys.path.append('..')
 sys.path.append('.')
 
 from src.process_data import DataProcessor as preprocess
 import src.data_retrieval as dr
-
 
 # st.beta_set_page_config(
 #     page_title="Analysis of Glioblastoma papers from PubMed",
@@ -20,11 +20,8 @@ import src.data_retrieval as dr
 
 st.title('Analysis of Glioblastoma papers from PubMed')
 
-get_data = dr.GetPubmedData()
-# st.text('Fetching latest day of data, please wait a moment...')
-# get_data.get_recent_data()
-# st.text('Done!')
-st.text('Creating summary table')
+get_data = dr.GetPubmedData(create_db=False)
+
 cnx = get_data.db_con
 
 prep = preprocess()
@@ -32,22 +29,37 @@ prep = preprocess()
 st.subheader("Newest papers")
 n_articles = st.number_input(label="Newest N papers",
                              value=5)
+if st.button('Refresh latest data (WARNING: this is slow)'):
+    st.text('Fetching latest day of data, please wait a moment...')
+    get_data.get_recent_data()
+    st.write("Done")
+
+st.text('Creating summary table')
+
 sub_df = pd.read_sql_query(f"""SELECT * FROM abstracts 
                               ORDER BY retrieval_date DESC
                               LIMIT {n_articles}""", cnx)
 
-sub_df['top_entities'] = [pd.Series(json.loads(x)).value_counts()[:10].
-                      index.tolist() for x in sub_df['entities']]
-sub_df["year"] = sub_df.date.apply(lambda x: int(x[:4]))
 
-st.table(sub_df[["date",
-                 "title",
-                 "full_journal_name",
-                 "last_author",
-                 "doi",
-                 "top_entities",
-                 "retrieval_date"]].tail(n_articles)[::-1])
+@st.cache
+def get_abstract_table(sub_df, n_articles):
+    sub_df['top_entities'] = [pd.Series(json.loads(x)).value_counts()[:10].
+                                  index.tolist() for x in sub_df['entities']]
+    sub_df["year"] = sub_df.date.apply(lambda x: int(x[:4]))
 
+    sub_df = sub_df[["date",
+                     "title",
+                     "full_journal_name",
+                     "last_author",
+                     "doi",
+                     "top_entities",
+                     "retrieval_date"]].tail(n_articles)[::-1]
+
+    return sub_df
+
+
+sub_df_new = get_abstract_table(sub_df, n_articles)
+st.table(sub_df_new)
 
 df = pd.read_sql_query("SELECT * FROM abstracts", cnx)
 df.entities = df.entities.apply(lambda x: json.loads(x))
@@ -63,12 +75,15 @@ year_since = st.slider("Display data since",
                        value=2020,
                        step=1)
 
+
+
 year_index = df.year >= year_since
-value_counts = prep.get_gene_value_counts(df.entities[year_index])
+sub_year1 = df.entities[year_index]
+st.write(f"Computed on {len(sub_year1)} abstracts")
+value_counts = prep.get_gene_value_counts(sub_year1)
 
 TOP = 20
 st.subheader(f'Plot top {TOP} Gene counts accross all abstracts')
-
 fig, ax = plt.subplots()
 ax.bar(value_counts.index[:TOP],
        value_counts.values[:TOP])
@@ -87,14 +102,22 @@ year_since2 = st.slider("Display data since year",
                         step=1)
 
 max_features = st.number_input(label="Number of top co-occurences",
-                               value=30)
+                               value=20)
 
 year_index2 = df.year >= year_since2
 
+sub_year2 = df.entities[year_index2]
 
-fig_map = prep.plot_entity_heatmap(df.entities[year_index2],
-                                   font_scale=.9,
-                                   max_entities=max_features)
-st.pyplot(fig_map)
+
+def plot_heatmap(year_df, max_features):
+    st.write(f"Computed on {len(year_df)} abstracts")
+
+    fig_map = prep.plot_entity_heatmap(year_df,
+                                       font_scale=.9,
+                                       max_entities=max_features)
+    st.pyplot(fig_map)
+
+
+plot_heatmap(sub_year2, max_features)
 
 cnx.close()

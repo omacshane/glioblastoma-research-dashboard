@@ -1,10 +1,10 @@
 import re
-import json
 import pandas as pd
 import numpy as np
 
 import spacy
 import seaborn as sns # plotting
+import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import CountVectorizer
 
@@ -79,6 +79,8 @@ class DataProcessor():
         fig = sns.clustermap(X_dense,
                              xticklabels=labels,
                              yticklabels=labels)
+        plt.setp(fig.ax_heatmap.get_xticklabels(), rotation=45)
+
 
         return fig
 
