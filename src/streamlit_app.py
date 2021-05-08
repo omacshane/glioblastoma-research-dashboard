@@ -42,7 +42,7 @@ sub_df = pd.read_sql_query(f"""SELECT * FROM abstracts
                               LIMIT {n_articles}""", cnx)
 
 
-@st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
+#@st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
 def get_abstract_table(sub_df, n_articles):
     sub_df['top_entities'] = [pd.Series(json.loads(x)).value_counts()[:10].
                                   index.tolist() for x in sub_df['entities']]
