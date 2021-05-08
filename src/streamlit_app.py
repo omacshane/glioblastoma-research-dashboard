@@ -4,9 +4,12 @@ import numpy as np
 import json
 
 from matplotlib import pyplot as plt
+from matplotlib.backends.backend_agg import RendererAgg
 import logging
-logging.basicConfig(level=logging.DEBUG)
 import sys
+
+logging.basicConfig(level=logging.DEBUG)
+_lock = RendererAgg.lock
 
 sys.path.append('../src/')
 sys.path.append('..')
@@ -92,14 +95,15 @@ value_counts = get_data.preprocessor.get_gene_value_counts(sub_year1)
 TOP = 20
 st.subheader(f'Plot top {TOP} Gene counts accross all abstracts')
 logging.info("Plot word freqs")
-fig, ax = plt.subplots()
-ax.bar(value_counts.index[:TOP],
-       value_counts.values[:TOP])
-plt.xticks(rotation=45)
-plt.tick_params(axis='x', which='major', labelsize=5)
-plt.tight_layout()
+with _lock:
+    fig, ax = plt.subplots()
+    ax.bar(value_counts.index[:TOP],
+           value_counts.values[:TOP])
+    plt.xticks(rotation=45)
+    plt.tick_params(axis='x', which='major', labelsize=5)
+    plt.tight_layout()
 
-st.pyplot(fig)
+    st.pyplot(fig)
 
 st.subheader('Plot heatmap of TOP N co-occurences of terms in abstracts')
 
@@ -134,13 +138,13 @@ def plot_heatmap(year_df, max_features, sample_size=500):
 
     return fig_map
 
-
-heatmp_plot = plot_heatmap(sub_year1,
-                            max_features,
-                            sample_size=max_sample_size)
-logging.info("Set axis")
-plt.setp(heatmp_plot.ax_heatmap.get_xticklabels(), rotation=45)
-logging.info("Plot heatmap")
-st.pyplot(heatmp_plot)
+with _lock:
+    heatmp_plot = plot_heatmap(sub_year1,
+                                max_features,
+                                sample_size=max_sample_size)
+    logging.info("Set axis")
+    plt.setp(heatmp_plot.ax_heatmap.get_xticklabels(), rotation=45)
+    logging.info("Plot heatmap")
+    st.pyplot(heatmp_plot)
 # logging.info("Close DB connection")
 # cnx.close()

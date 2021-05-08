@@ -215,6 +215,6 @@ if __name__ == '__main__':
 
     gpd = GetPubmedData()
     print("WARNING: this could take a while")
-    #gpd.get_data_from_years(2021)
-    gpd.get_recent_data()
+    gpd.get_data_from_years(2021)
+    #gpd.get_recent_data()
     print("Finished querying historical data")
