@@ -30,7 +30,9 @@ cnx = get_data.db_con
 
 st.subheader("Newest papers")
 n_articles = st.number_input(label="Newest N papers",
-                             value=5)
+                             value=5,
+                             min_value=1,
+                             max_value=50)
 if st.button('Refresh latest data (WARNING: this is slow)'):
     st.text('Fetching latest day of data, please wait a moment...')
     get_data.get_recent_data()
@@ -114,12 +116,14 @@ st.subheader('Plot heatmap of TOP N co-occurences of terms in abstracts')
 #                         step=1)
 
 max_features = st.number_input(label="Number of top co-occurences",
-                               value=20)
+                               value=20,
+                               min_value=2,
+                               max_value=50)
 
 max_sample_size = st.number_input(label="Number of abstracts to sample",
                                   value=500,
                                   min_value=2,
-                                  max_value=2000)
+                                  max_value=10000)
 
 # year_index2 = df.year >= year_since2
 #
