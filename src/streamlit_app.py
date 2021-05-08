@@ -42,7 +42,7 @@ sub_df = pd.read_sql_query(f"""SELECT * FROM abstracts
                               LIMIT {n_articles}""", cnx)
 
 
-#@st.cache(allow_output_mutation=True, max_entries=10, ttl=3600)
+@st.cache(allow_output_mutation=True, max_entries=10, ttl=3600)
 def get_abstract_table(sub_df, n_articles):
     sub_df['top_entities'] = [pd.Series(json.loads(x)).value_counts()[:10].
                                   index.tolist() for x in sub_df['entities']]
@@ -95,11 +95,11 @@ st.pyplot(fig)
 
 st.subheader('Plot heatmap of TOP N co-occurences of terms in abstracts')
 
-year_since2 = st.slider("Display data since year",
-                        min_value=int(df.year.min()),
-                        max_value=int(df.year.max()),
-                        value=2020,
-                        step=1)
+# year_since2 = st.slider("Display data since year",
+#                         min_value=int(df.year.min()),
+#                         max_value=int(df.year.max()),
+#                         value=2020,
+#                         step=1)
 
 max_features = st.number_input(label="Number of top co-occurences",
                                value=20)
@@ -109,12 +109,12 @@ max_sample_size = st.number_input(label="Number of abstracts to sample",
                                   min_value=2,
                                   max_value=2000)
 
-year_index2 = df.year >= year_since2
+# year_index2 = df.year >= year_since2
+#
+# sub_year2 = df.genes[year_index2]
 
-sub_year2 = df.genes[year_index2]
-
-#@st.cache(allow_output_mutation=True, max_entries=10, ttl=3600)
-def plot_heatmap(year_df, max_features, sample_size=max_sample_size):
+@st.cache(allow_output_mutation=True, max_entries=10, ttl=3600)
+def plot_heatmap(year_df, max_features, sample_size=500):
 
     sample_df = year_df.sample(np.min([sample_size, len(year_df)]))
     st.write(f"Computed on {len(sample_df)} abstracts")
@@ -125,6 +125,8 @@ def plot_heatmap(year_df, max_features, sample_size=max_sample_size):
     st.pyplot(fig_map)
 
 
-plot_heatmap(sub_year2, max_features)
+plot_heatmap(sub_year1,
+             max_features,
+             sample_size=max_sample_size)
 
 cnx.close()
