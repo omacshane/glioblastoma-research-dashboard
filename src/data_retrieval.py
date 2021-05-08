@@ -49,7 +49,8 @@ class GetPubmedData():
                                                     doi text,
                                                     full_journal_name text,
                                                     abstract text,
-                                                    entities text)""")
+                                                    entities text,
+                                                    genes text)""")
             
     def _try_get_field(self, field):
         
@@ -84,9 +85,13 @@ class GetPubmedData():
 
         abstract = self.preprocessor.striphtml(data=text)
         sub_cleaned_entities = self.preprocessor.get_entities(abstract)
-        json_output = json.dumps(sub_cleaned_entities)
 
-        return json_output
+        gene_list = self.preprocessor.get_genes_from_entities(sub_cleaned_entities)
+
+        json_entities = json.dumps(sub_cleaned_entities)
+        json_genes = json.dumps(gene_list)
+
+        return json_entities, json_genes
 
     def get_meta_data(self, id):
 
@@ -114,10 +119,10 @@ class GetPubmedData():
          last_author, title, language,
          doi, full_journal_name) = self.get_meta_data(id)
         abstract = self.get_abstract(str(id))
-        entities = self.get_entities_from_abstract(abstract)
+        entities, genes = self.get_entities_from_abstract(abstract)
 
 
-        db.execute('INSERT OR IGNORE INTO abstracts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (id,
+        db.execute('INSERT OR IGNORE INTO abstracts VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (id,
                                                                                 pub_date,
                                                                                 retrieval_date,
                                                                                 source,
@@ -127,7 +132,8 @@ class GetPubmedData():
                                                                                 doi,
                                                                                 full_journal_name,
                                                                                 abstract,
-                                                                                entities))
+                                                                                entities,
+                                                                                genes))
         db.commit()
 
     def query_definition(self, pub_med_database, year):
@@ -199,5 +205,6 @@ if __name__ == '__main__':
 
     gpd = GetPubmedData()
     print("WARNING: this could take a while")
-    gpd.get_data_from_years(2021)
+    #gpd.get_data_from_years(2021)
+    gpd.get_recent_data()
     print("Finished querying historical data")

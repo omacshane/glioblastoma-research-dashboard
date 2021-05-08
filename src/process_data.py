@@ -13,6 +13,8 @@ class DataProcessor():
     def __init__(self):
         self.nlp = spacy.load("en_core_sci_lg")
         self.genes = pd.read_csv("data/genes.csv", sep='\t')
+        self.list_of_genes = self.genes["Approved symbol"].\
+            apply(lambda x: str(x).lower())
 
     def striphtml(self, data):
         p = re.compile(r'<.*?>')
@@ -47,26 +49,19 @@ class DataProcessor():
         return cleaned_entities
 
     def plot_entity_heatmap(self,
-                            cleaned_entities,
+                            cleaned_genes,
                             font_scale=.6,
                             max_entities=50):
 
 
         term_list = np.unique(
             [element.lower() for list_ in
-             cleaned_entities for element in list_])
-
-        # create a one-hot encoded matrix for all unique entities
-        #X = np.array(cleaned_entities)
-        #matrix = np.array([np.in1d(term_list, x) for x in X])
-        #index = np.argsort(matrix.sum(axis=0))[::-1]
+             cleaned_genes for element in list_])
 
         cv = CountVectorizer(ngram_range=(1, 1),
                              max_features=max_entities)
         # matrix of token counts
-        X = cv.fit_transform(
-            cleaned_entities.apply(lambda x: self.get_genes_from_entities(x),
-                                   convert_dtype=False))
+        X = cv.fit_transform(cleaned_genes)
         Xc = (X.T * X)  # matrix manipulation
         Xc.setdiag(
             0)  # set the diagonals to be zeroes as it's pointless to be 1
@@ -86,16 +81,12 @@ class DataProcessor():
 
     def get_gene_value_counts(self, cleaned_entities):
 
-        self.list_of_genes = self.genes["Approved symbol"].\
-            apply(lambda x: str(x).lower())
-
-        # get list of all entities to calaculate terms
+        # get list of all entities to calculate terms
         all_terms = [element.lower() for list_ in cleaned_entities for element in
                      list_]
 
         all_terms_series = pd.Series(all_terms)
         # count occurrence of each term
-        val_counts = all_terms_series[
-            all_terms_series.isin(self.list_of_genes)].value_counts()
+        val_counts = all_terms_series.value_counts()
 
         return val_counts

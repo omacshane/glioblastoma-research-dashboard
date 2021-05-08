@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import json
 
 from matplotlib import pyplot as plt
@@ -41,7 +42,7 @@ sub_df = pd.read_sql_query(f"""SELECT * FROM abstracts
                               LIMIT {n_articles}""", cnx)
 
 
-@st.cache
+#@st.cache(allow_output_mutation=True, max_entries=10, ttl=3600)
 def get_abstract_table(sub_df, n_articles):
     sub_df['top_entities'] = [pd.Series(json.loads(x)).value_counts()[:10].
                                   index.tolist() for x in sub_df['entities']]
@@ -53,6 +54,7 @@ def get_abstract_table(sub_df, n_articles):
                      "last_author",
                      "doi",
                      "top_entities",
+                     "genes",
                      "retrieval_date"]].tail(n_articles)[::-1]
 
     return sub_df
@@ -75,10 +77,8 @@ year_since = st.slider("Display data since",
                        value=2020,
                        step=1)
 
-
-
 year_index = df.year >= year_since
-sub_year1 = df.entities[year_index]
+sub_year1 = df.genes[year_index]
 st.write(f"Computed on {len(sub_year1)} abstracts")
 value_counts = prep.get_gene_value_counts(sub_year1)
 
@@ -104,15 +104,22 @@ year_since2 = st.slider("Display data since year",
 max_features = st.number_input(label="Number of top co-occurences",
                                value=20)
 
+max_sample_size = st.number_input(label="Number of abstracts to sample",
+                                  value=500,
+                                  min_value=2,
+                                  max_value=2000)
+
 year_index2 = df.year >= year_since2
 
-sub_year2 = df.entities[year_index2]
+sub_year2 = df.genes[year_index2]
 
+#@st.cache(allow_output_mutation=True, max_entries=10, ttl=3600)
+def plot_heatmap(year_df, max_features, sample_size=max_sample_size):
 
-def plot_heatmap(year_df, max_features):
-    st.write(f"Computed on {len(year_df)} abstracts")
+    sample_df = year_df.sample(np.min([sample_size, len(year_df)]))
+    st.write(f"Computed on {len(sample_df)} abstracts")
 
-    fig_map = prep.plot_entity_heatmap(year_df,
+    fig_map = prep.plot_entity_heatmap(sample_df,
                                        font_scale=.9,
                                        max_entities=max_features)
     st.pyplot(fig_map)
