@@ -42,7 +42,7 @@ sub_df = pd.read_sql_query(f"""SELECT * FROM abstracts
                               LIMIT {n_articles}""", cnx)
 
 
-@st.cache(allow_output_mutation=True, max_entries=10, ttl=3600)
+@st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
 def get_abstract_table(sub_df, n_articles):
     sub_df['top_entities'] = [pd.Series(json.loads(x)).value_counts()[:10].
                                   index.tolist() for x in sub_df['entities']]
@@ -113,7 +113,7 @@ max_sample_size = st.number_input(label="Number of abstracts to sample",
 #
 # sub_year2 = df.genes[year_index2]
 
-@st.cache(allow_output_mutation=True, max_entries=10, ttl=3600)
+#@st.cache(allow_output_mutation=True, max_entries=10, ttl=600)
 def plot_heatmap(year_df, max_features, sample_size=500):
 
     sample_df = year_df.sample(np.min([sample_size, len(year_df)]))
@@ -122,11 +122,14 @@ def plot_heatmap(year_df, max_features, sample_size=500):
     fig_map = prep.plot_entity_heatmap(sample_df,
                                        font_scale=.9,
                                        max_entities=max_features)
-    st.pyplot(fig_map)
+
+    return fig_map
 
 
-plot_heatmap(sub_year1,
-             max_features,
-             sample_size=max_sample_size)
+heatmp_plot = plot_heatmap(sub_year1,
+                  max_features,
+                  sample_size=max_sample_size)
+plt.setp(heatmp_plot.ax_heatmap.get_xticklabels(), rotation=45)
+st.pyplot(heatmp_plot)
 
 cnx.close()

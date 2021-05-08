@@ -70,12 +70,11 @@ class DataProcessor():
             cv.vocabulary_.items(), key=lambda item: item[1]).keys()
 
         X_dense = Xc.todense()
+        print(f"x mat shape: {X_dense.shape}")
         sns.set(font_scale=font_scale)
         fig = sns.clustermap(X_dense,
                              xticklabels=labels,
                              yticklabels=labels)
-        plt.setp(fig.ax_heatmap.get_xticklabels(), rotation=45)
-
 
         return fig
 
