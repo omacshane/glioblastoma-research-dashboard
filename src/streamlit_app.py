@@ -30,10 +30,10 @@ cnx = get_data.db_con
 
 st.subheader("Newest papers")
 n_articles = st.number_input(label="Newest N papers",
-                             value=5,
+                             value=10,
                              min_value=1,
                              max_value=50)
-if st.button('Refresh latest data (WARNING: this is slow)'):
+if st.button('Refresh latest data (WARNING: this can be slow)'):
     st.text('Fetching latest day of data, please wait a moment...')
     get_data.get_recent_data()
     st.write("Done")
@@ -45,6 +45,15 @@ sub_df = pd.read_sql_query(f"""SELECT * FROM abstracts
                               LIMIT {n_articles}""", cnx)
 
 
+def title_with_link(x):
+
+    link = "https://doi.org/"+x[1]
+
+    html_link = f'<a target="_blank" href="{link}">{x[0]}</a>'
+
+    return html_link
+
+
 @st.cache(allow_output_mutation=True, max_entries=5, ttl=3000)
 def get_abstract_table(sub_df, n_articles):
     logging.info("Get top entities")
@@ -53,11 +62,14 @@ def get_abstract_table(sub_df, n_articles):
     logging.info("Iterate over year")
     sub_df["year"] = sub_df.date.apply(lambda x: int(x[:4]))
     logging.info("Return subbed df")
+
+    sub_df["title_link"] = sub_df[["title", "doi"]].apply(title_with_link,
+                                  axis=1)
+
     sub_df = sub_df[["date",
-                     "title",
+                     "title_link",
                      "full_journal_name",
                      "last_author",
-                     "doi",
                      "top_entities",
                      "genes",
                      "retrieval_date"]].tail(n_articles)[::-1]
@@ -66,7 +78,9 @@ def get_abstract_table(sub_df, n_articles):
 
 
 sub_df_new = get_abstract_table(sub_df, n_articles)
-st.table(sub_df_new)
+df = sub_df_new.to_html(escape=False)
+st.write(df, unsafe_allow_html=True)
+#st.table(sub_df_new)
 
 logging.info("Run query over full table")
 df = pd.read_sql_query("SELECT * FROM abstracts", cnx)

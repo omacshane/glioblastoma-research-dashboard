@@ -1,5 +1,6 @@
 # glioblastoma-research-dashboard
 
+The demo version of the app is now live [here](https://share.streamlit.io/omacshane/glioblastoma-research-dashboard/main/src/streamlit_app.py), thanks to [Streamlit sharing](https://streamlit.io/sharing)!
 
 # Streamlit app
 
