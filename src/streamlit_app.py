@@ -54,7 +54,7 @@ def title_with_link(x):
     return html_link
 
 
-@st.cache(allow_output_mutation=True, max_entries=5, ttl=3000)
+@st.cache_data(max_entries=5, ttl=3000)
 def get_abstract_table(sub_df, n_articles):
     logging.info("Get top entities")
     sub_df['top_entities'] = [pd.Series(json.loads(x)).value_counts()[:10].
@@ -143,7 +143,7 @@ max_sample_size = st.number_input(label="Number of abstracts to sample",
 #
 # sub_year2 = df.genes[year_index2]
 
-@st.cache(allow_output_mutation=True, max_entries=5, ttl=3000)
+@st.cache_data(max_entries=5, ttl=3000)
 def plot_heatmap(year_df, max_features, sample_size=500):
 
     logging.info("Sample dataframe")
